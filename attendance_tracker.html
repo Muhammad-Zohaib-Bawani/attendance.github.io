@@ -552,18 +552,26 @@
           action = map[msg.date].lastState === 'IN' ? 'OUT' : 'IN';
         }
 
-        if (action === 'IN') {
-          map[msg.date].sessions.push({ inTime: msg.time, inMsg: msg.content, outTime: null, outMsg: null });
-          map[msg.date].lastState = 'IN';
-        } else if (action === 'OUT') {
-          const current = map[msg.date].sessions[map[msg.date].sessions.length - 1];
-          if (current && !current.outTime) {
-            current.outTime = msg.time;
-            current.outMsg = msg.content;
-          } else {
-            map[msg.date].sessions.push({ inTime: null, inMsg: null, outTime: msg.time, outMsg: msg.content });
+        if (action) {
+          // Extract time from message if present (e.g., "Out at 8:30 PM")
+          let useTime = msg.time;
+          const timeRegex = /(\d{1,2}:\d{2}(?::\d{2})?\s*[AP]M)/i;
+          const timeMatch = msg.content.match(timeRegex);
+          if (timeMatch) useTime = timeMatch[1];
+
+          if (action === 'IN') {
+            map[msg.date].sessions.push({ inTime: useTime, inMsg: msg.content, outTime: null, outMsg: null });
+            map[msg.date].lastState = 'IN';
+          } else if (action === 'OUT') {
+            const current = map[msg.date].sessions[map[msg.date].sessions.length - 1];
+            if (current && !current.outTime) {
+              current.outTime = useTime;
+              current.outMsg = msg.content;
+            } else {
+              map[msg.date].sessions.push({ inTime: null, inMsg: null, outTime: useTime, outMsg: msg.content });
+            }
+            map[msg.date].lastState = 'OUT';
           }
-          map[msg.date].lastState = 'OUT';
         }
       });
 
