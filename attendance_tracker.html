@@ -1,611 +1,858 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Attendance Tracer Pro | MicroSysX</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --primary: #00d2ff;
-            --secondary: #3a7bd5;
-            --accent: #f093fb;
-            --background: #0b0f19;
-            --surface: #161c2d;
-            --surface-light: #1e293b;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --glass: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --success: #10b981;
-            --danger: #f43f5e;
-            --warning: #f59e0b;
-        }
+      :root {
+        --primary: #00d2ff;
+        --secondary: #3a7bd5;
+        --accent: #f093fb;
+        --background: #0b0f19;
+        --surface: #161c2d;
+        --surface-light: #1e293b;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --glass: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --success: #10b981;
+        --danger: #f43f5e;
+        --warning: #f59e0b;
+      }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-font-smoothing: antialiased;
-        }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+      }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--background);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(58, 123, 213, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 210, 255, 0.1) 0%, transparent 40%);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--background);
+        background-image: radial-gradient(
+            circle at 10% 20%,
+            rgba(58, 123, 213, 0.1) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 90% 80%,
+            rgba(0, 210, 255, 0.1) 0%,
+            transparent 40%
+          );
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+      }
 
-        header {
-            padding: 4rem 2rem 2rem;
-            text-align: center;
-        }
+      header {
+        padding: 4rem 2rem 2rem;
+        text-align: center;
+      }
 
-        header h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 800;
-            background: linear-gradient(to right, var(--primary), var(--secondary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-            letter-spacing: -2px;
-        }
+      header h1 {
+        font-family: "Outfit", sans-serif;
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(
+          to right,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+        letter-spacing: -2px;
+      }
 
-        header p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
+      header p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 500;
+      }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            width: 95%;
-            padding-bottom: 5rem;
-        }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        width: 95%;
+        padding-bottom: 5rem;
+      }
 
-        .main-card {
-            background: var(--surface);
-            border: 1px solid var(--glass-border);
-            border-radius: 2rem;
-            padding: 3rem;
-            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(20px);
-            position: relative;
-            overflow: hidden;
-        }
+      .main-card {
+        background: var(--surface);
+        border: 1px solid var(--glass-border);
+        border-radius: 2rem;
+        padding: 3rem;
+        box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(20px);
+        position: relative;
+        overflow: hidden;
+      }
 
-        .main-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-        }
+      .main-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+      }
 
+      .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      @media (max-width: 850px) {
         .config-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-bottom: 3rem;
+          grid-template-columns: 1fr;
         }
+      }
 
-        @media (max-width: 850px) {
-            .config-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+      .input-box {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
 
-        .input-box {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
+      .input-box label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-left: 0.25rem;
+      }
 
-        .input-box label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-left: 0.25rem;
-        }
+      input,
+      select {
+        background: var(--surface-light);
+        border: 1px solid var(--glass-border);
+        border-radius: 1rem;
+        padding: 1rem 1.25rem;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-        input, select {
-            background: var(--surface-light);
-            border: 1px solid var(--glass-border);
-            border-radius: 1rem;
-            padding: 1rem 1.25rem;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 1rem;
-            outline: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+      input:focus,
+      select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.1);
+        transform: translateY(-2px);
+      }
 
-        input:focus, select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.1);
-            transform: translateY(-2px);
-        }
+      .file-drop {
+        position: relative;
+        border: 2px dashed var(--glass-border);
+        border-radius: 1rem;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: var(--glass);
+      }
 
-        .file-drop {
-            position: relative;
-            border: 2px dashed var(--glass-border);
-            border-radius: 1rem;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: var(--glass);
-        }
+      .file-drop:hover {
+        border-color: var(--primary);
+        background: rgba(0, 210, 255, 0.05);
+      }
 
-        .file-drop:hover {
-            border-color: var(--primary);
-            background: rgba(0, 210, 255, 0.05);
-        }
+      .file-drop input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+      }
 
-        .file-drop input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
+      .file-drop-text {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
 
-        .file-drop-text {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
+      .file-drop-text span {
+        color: var(--primary);
+      }
 
-        .file-drop-text span {
-            color: var(--primary);
-        }
+      .stats-strip {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
 
+      @media (max-width: 600px) {
         .stats-strip {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 3rem;
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .stat-item {
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 1.25rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+
+      .stat-item:hover {
+        transform: scale(1.02);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .stat-val {
+        font-family: "Outfit", sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+
+      .stat-lbl {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+
+      .data-section {
+        background: var(--surface-light);
+        border-radius: 1.5rem;
+        border: 1px solid var(--glass-border);
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+        font-size: 1rem;
+        font-weight: 500;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.01);
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.8rem;
+        border-radius: 2rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .tag-in {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+      }
+
+      .tag-out {
+        background: rgba(244, 63, 94, 0.1);
+        color: var(--danger);
+      }
+
+      .tag-duration {
+        background: rgba(0, 210, 255, 0.1);
+        color: var(--primary);
+      }
+
+      .empty-visual {
+        padding: 6rem 2rem;
+        text-align: center;
+        color: var(--text-muted);
+      }
+
+      .empty-visual svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1.5rem;
+        opacity: 0.2;
+      }
+
+      footer {
+        margin-top: auto;
+        padding: 4rem 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        opacity: 0.6;
+      }
+
+      /* Tooltip-like month label */
+      .month-chip {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        display: inline-block;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--background);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--surface-light);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--glass-border);
+      }
+
+      .animate-up {
+        animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
         }
 
-        @media (max-width: 600px) {
-            .stats-strip {
-                grid-template-columns: 1fr 1fr;
-            }
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
 
-        .stat-item {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 1.25rem;
-            padding: 2rem 1.5rem;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
+      .editable-time {
+        background: var(--surface-light);
+        border: 1px solid var(--glass-border);
+        border-radius: 2rem;
+        padding: 0.4rem 0.8rem;
+        color: var(--text);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+        width: 100px;
+        outline: none;
+      }
 
-        .stat-item:hover {
-            transform: scale(1.02);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .stat-val {
-            font-family: 'Outfit', sans-serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-
-        .stat-lbl {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .data-section {
-            background: var(--surface-light);
-            border-radius: 1.5rem;
-            border: 1px solid var(--glass-border);
-            overflow: hidden;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 1.25rem 1.5rem;
-            text-align: left;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        td {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--glass-border);
-            font-size: 1rem;
-            font-weight: 500;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover td {
-            background: rgba(255, 255, 255, 0.01);
-        }
-
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.4rem 0.8rem;
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .tag-in { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .tag-out { background: rgba(244, 63, 94, 0.1); color: var(--danger); }
-        .tag-duration { background: rgba(0, 210, 255, 0.1); color: var(--primary); }
-
-        .empty-visual {
-            padding: 6rem 2rem;
-            text-align: center;
-            color: var(--text-muted);
-        }
-
-        .empty-visual svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 1.5rem;
-            opacity: 0.2;
-        }
-
-        footer {
-            margin-top: auto;
-            padding: 4rem 2rem;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            opacity: 0.6;
-        }
-
-        /* Tooltip-like month label */
-        .month-chip {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 0.5rem;
-            font-size: 0.7rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            display: inline-block;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--background); }
-        ::-webkit-scrollbar-thumb { background: var(--surface-light); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--glass-border); }
-
-        .animate-up {
-            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+      .editable-time:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
+      }
     </style>
-</head>
-<body>
+  </head>
+
+  <body>
     <header>
-        <p>Advanced Analytics</p>
-        <h1>Attendance Tracer</h1>
+      <p>Advanced Analytics</p>
+      <h1>Attendance Tracer</h1>
     </header>
 
     <div class="container animate-up">
-        <div class="main-card">
-            <div class="config-grid">
-                <div class="input-box">
-                    <label>WhatsApp Log</label>
-                    <div class="file-drop">
-                        <input type="file" id="fileInput" accept=".txt">
-                        <div class="file-drop-text" id="fileName">
-                            <span>Upload .txt</span> or Drop file
-                        </div>
-                    </div>
-                </div>
-                <div class="input-box">
-                    <label>Individual Name</label>
-                    <input type="text" id="nameFilter" value="Zaib bawani" placeholder="Enter name...">
-                </div>
-                <div class="input-box">
-                    <label>Reporting Month</label>
-                    <select id="monthFilter">
-                        <option value="all">Full Year Analysis</option>
-                        <option value="0">January</option>
-                        <option value="1">February</option>
-                        <option value="2">March</option>
-                        <option value="3">April</option>
-                        <option value="4">May</option>
-                        <option value="5">June</option>
-                        <option value="6">July</option>
-                        <option value="7">August</option>
-                        <option value="8">September</option>
-                        <option value="9">October</option>
-                        <option value="10">November</option>
-                        <option value="11">December</option>
-                    </select>
-                </div>
+      <div class="main-card">
+        <div class="config-grid">
+          <div class="input-box">
+            <label>WhatsApp Log</label>
+            <div class="file-drop">
+              <input type="file" id="fileInput" accept=".txt" />
+              <div class="file-drop-text" id="fileName">
+                <span>Upload .txt</span> or Drop file
+              </div>
             </div>
-
-            <div id="statsStrip" class="stats-strip" style="display: none;">
-                <div class="stat-item">
-                    <span class="stat-lbl">Active Days</span>
-                    <span class="stat-val" id="statDays">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-lbl">Total Burned</span>
-                    <span class="stat-val" id="statHours">0h 0m</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-lbl">Average Session</span>
-                    <span class="stat-val" id="statAvg">0h 0m</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-lbl">Monthly Rank</span>
-                    <span class="stat-val">A+</span>
-                </div>
-            </div>
-
-            <div id="dataSection" class="data-section">
-                <div class="empty-visual">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    <p>Analysis provides insights only after a log file is digitized.</p>
-                </div>
-            </div>
+          </div>
+          <div class="input-box">
+            <label>Individual Name</label>
+            <input
+              type="text"
+              id="nameFilter"
+              value="Zaib bawani"
+              placeholder="Enter name..."
+            />
+          </div>
+          <div class="input-box">
+            <label>Reporting Month</label>
+            <select id="monthFilter">
+              <option value="all">Full Year Analysis</option>
+              <option value="0">January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
+          </div>
+          <div class="input-box">
+            <label>Total Working Days</label>
+            <input type="number" id="totalDays" value="21" min="1" />
+          </div>
+          <div class="input-box">
+            <label>Daily Working Hours</label>
+            <input type="number" id="dailyHours" value="9" min="1" step="1" />
+          </div>
         </div>
+
+        <div id="statsStrip2" class="stats-strip">
+          <div class="stat-item">
+            <span class="stat-lbl">Required Hours</span>
+            <span class="stat-val" id="statRequired">0h</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-lbl">Worked Hours</span>
+            <span class="stat-val" id="statWorked">0h</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-lbl">Remaining Hours</span>
+            <span class="stat-val" id="statRemaining">0h</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-lbl">Average Session</span>
+            <span class="stat-val" id="statAvg">0h 0m</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-lbl">Overtime Hours</span>
+            <span class="stat-val" id="statOvertime">0h</span>
+          </div>
+        </div>
+
+        <div id="dataSection" class="data-section">
+          <div class="empty-visual">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              ></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <p>
+              Analysis provides insights only after a log file is digitized.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <footer>
-        MicroSysX Performance Ledger &bull; 2025 Internal Tool
-    </footer>
+    <footer>MicroSysX Performance Ledger &bull; 2025 Internal Tool</footer>
 
     <script>
-        const fileInput = document.getElementById('fileInput');
-        const nameFilterInput = document.getElementById('nameFilter');
-        const monthFilterSelect = document.getElementById('monthFilter');
-        const dataSection = document.getElementById('dataSection');
-        const statsStrip = document.getElementById('statsStrip');
-        const fileNameDisplay = document.getElementById('fileName');
+      const fileInput = document.getElementById("fileInput");
+      const nameFilterInput = document.getElementById("nameFilter");
+      const monthFilterSelect = document.getElementById("monthFilter");
+      const dataSection = document.getElementById("dataSection");
+      const statsStrip = document.getElementById("statsStrip");
+      const fileNameDisplay = document.getElementById("fileName");
 
-        let chatData = [];
+      // Set current month as default
+      monthFilterSelect.value = new Date().getMonth().toString();
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+      let chatData = [];
+      let attendanceMap = {};
+      let currentTargetMonth = "all";
 
-            fileNameDisplay.innerHTML = `File: <span>\${file.name}</span>`;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                parseChat(event.target.result);
-                processAndRender();
-            };
-            reader.readAsText(file);
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        fileNameDisplay.innerHTML = `File: <span>${file.name}</span>`;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          parseChat(event.target.result);
+          processAndRender();
+        };
+        reader.readAsText(file);
+      });
+
+      nameFilterInput.addEventListener("input", processAndRender);
+      monthFilterSelect.addEventListener("change", processAndRender);
+
+      document
+        .getElementById("totalDays")
+        .addEventListener("input", () =>
+          updateStats(attendanceMap, currentTargetMonth)
+        );
+      document
+        .getElementById("dailyHours")
+        .addEventListener("input", () =>
+          updateStats(attendanceMap, currentTargetMonth)
+        );
+
+      function parseChat(text) {
+        const lines = text.split("\n");
+        const messages = [];
+        let currentMsg = null;
+        const timestampRegex =
+          /^(\[?\d{1,2}\/\d{1,2}\/\d{2,4}, \d{1,2}:\d{2}(?::\d{2})?\s[AP]M\]?)( - )?/;
+
+        lines.forEach((line) => {
+          const match = line.match(timestampRegex);
+          if (match) {
+            if (currentMsg) messages.push(currentMsg);
+
+            const timestampStr = match[1].replace(/[\[\]]/g, "");
+            const rest = line.substring(match[0].length);
+            const colonIndex = rest.indexOf(":");
+
+            if (colonIndex !== -1) {
+              currentMsg = {
+                timestamp: timestampStr,
+                dateStr: timestampStr.split(", ")[0],
+                timeStr: timestampStr.split(", ")[1],
+                sender: rest.substring(0, colonIndex).trim(),
+                content: rest.substring(colonIndex + 1).trim(),
+              };
+            } else {
+              currentMsg = null;
+            }
+          } else if (currentMsg) {
+            currentMsg.content += " " + line.trim();
+          }
         });
 
-        nameFilterInput.addEventListener('input', processAndRender);
-        monthFilterSelect.addEventListener('change', processAndRender);
+        if (currentMsg) messages.push(currentMsg);
+        chatData = messages;
+      }
 
-        function parseChat(text) {
-            // Robust multi-line parser
-            const lines = text.split('\n');
-            const messages = [];
-            let currentMsg = null;
+      function processAndRender() {
+        if (chatData.length === 0) return;
 
-            // Regex for start of a WhatsApp message: MM/DD/YY, HH:MM AM/PM - 
-            // OR [MM/DD/YY, HH:MM:SS AM/PM] 
-            const timestampRegex = /^(\[?\d{1,2}\/\d{1,2}\/\d{2,4}, \d{1,2}:\d{2}(?::\d{2})? [AP]M\]?)( - )?/;
+        const targetName = nameFilterInput.value.trim().toLowerCase();
+        const targetMonth = monthFilterSelect.value;
 
-            lines.forEach(line => {
-                const match = line.match(timestampRegex);
-                if (match) {
-                    if (currentMsg) messages.push(currentMsg);
-                    
-                    const timestampStr = match[1].replace(/[\[\]]/g, '');
-                    const rest = line.substring(match[0].length);
-                    const colonIndex = rest.indexOf(':');
-                    
-                    if (colonIndex !== -1) {
-                        currentMsg = {
-                            timestamp: timestampStr,
-                            dateStr: timestampStr.split(', ')[0],
-                            timeStr: timestampStr.split(', ')[1],
-                            sender: rest.substring(0, colonIndex).trim(),
-                            content: rest.substring(colonIndex + 1).trim()
-                        };
-                    } else {
-                        currentMsg = null; // System message usually
-                    }
-                } else if (currentMsg) {
-                    currentMsg.content += ' ' + line.trim();
-                }
-            });
-            if (currentMsg) messages.push(currentMsg);
-            chatData = messages;
+        let events = [];
+
+        const checkInKeywords = [
+          /\bcheck in\b/i,
+          /\bchecked in\b/i,
+          /\bsigning in\b/i,
+          /\bsign in\b/i,
+          /✅ in/i,
+          /🟢/,
+        ];
+
+        const checkOutKeywords = [
+          /\bcheck out\b/i,
+          /\bchecked out\b/i,
+          /\bsigning out\b/i,
+          /\bsign out\b/i,
+          /\bcheckout\b/i,
+          /🔴/,
+        ];
+
+        chatData.forEach((msg) => {
+          console.log(msg);
+          if (msg.sender.toLowerCase() !== targetName) return;
+
+          const content = msg.content.toLowerCase();
+          let action = null;
+
+          if (checkOutKeywords.some((kw) => kw.test(content))) {
+            action = "out";
+          } else if (checkInKeywords.some((kw) => kw.test(content))) {
+            action = "in";
+          } else if (content === "in") {
+            action = "in";
+          } else if (content === "out") {
+            action = "out";
+          }
+
+          if (action) {
+            events.push({ date: msg.dateStr, time: msg.timeStr, action });
+          }
+          console.log(events);
+        });
+
+        // Sort events by date and time
+        const parseDateTime = (d, t) => {
+          const [m, dd, y] = d.split("/").map(Number);
+          const timeParts = t.split(/[:\s]/);
+          let h = +timeParts[0];
+          let min = +timeParts[1];
+          const ampm = t.toUpperCase().includes("PM") ? "PM" : "AM";
+          if (ampm === "PM" && h < 12) h += 12;
+          if (ampm === "AM" && h === 12) h = 0;
+          return new Date(2000 + y, m - 1, dd, h, min);
+        };
+
+        events.sort(
+          (a, b) =>
+            parseDateTime(a.date, a.time) - parseDateTime(b.date, b.time)
+        );
+
+        // Pair in and out
+        attendanceMap = {};
+        let currentIn = null;
+        events.forEach((event) => {
+          if (event.action === "in") {
+            currentIn = event;
+          } else if (event.action === "out" && currentIn) {
+            const date = currentIn.date;
+            if (!attendanceMap[date]) attendanceMap[date] = { in: [], out: [] };
+            attendanceMap[date].in.push(currentIn.time);
+            attendanceMap[date].out.push(event.time);
+            currentIn = null;
+          }
+        });
+
+        currentTargetMonth = targetMonth;
+
+        renderUI(attendanceMap, targetMonth);
+      }
+
+      function updateStats(data, targetMonth) {
+        let dates = Object.keys(data).sort((a, b) => {
+          const pa = a.split("/").map(Number);
+          const pb = b.split("/").map(Number);
+          return (
+            new Date(2000 + pa[2], pa[0] - 1, pa[1]) -
+            new Date(2000 + pb[2], pb[0] - 1, pb[1])
+          );
+        });
+
+        if (targetMonth !== "all") {
+          dates = dates.filter(
+            (d) =>
+              parseInt(d.split("/")[0], 10) - 1 === parseInt(targetMonth, 10)
+          );
         }
 
-        function processAndRender() {
-            if (chatData.length === 0) return;
+        let totalMin = 0;
+        let days = 0;
 
-            const targetName = nameFilterInput.value.trim().toLowerCase();
-            const targetMonth = monthFilterSelect.value;
-            
-            const attendanceMap = {};
+        dates.forEach((date) => {
+          const day = data[date];
+          const entry = day.in[0] || "-";
+          const exit = day.out[day.out.length - 1] || "-";
 
-            // Specific keywords with word boundaries or specific checks
-            const checkInKeywords = [
-                /\bcheck in\b/i, 
-                /\bchecked in\b/i, 
-                /\bsigning in\b/i, 
-                /\bsign in\b/i, 
-                /✅ in/i, 
-                /🟢/
-            ];
-            const checkOutKeywords = [
-                /\bcheck out\b/i, 
-                /\bchecked out\b/i, 
-                /\bsigning out\b/i, 
-                /\bsign out\b/i, 
-                /🔴/
-            ];
-
-            chatData.forEach(msg => {
-                if (msg.sender.toLowerCase() !== targetName) return;
-
-                const content = msg.content.toLowerCase();
-                let action = null;
-
-                // Priority check: specific phrases first
-                if (checkOutKeywords.some(kw => kw.test(content))) {
-                    action = 'out';
-                } else if (checkInKeywords.some(kw => kw.test(content))) {
-                    action = 'in';
-                } else if (msg.content.trim().toLowerCase() === 'in') {
-                    action = 'in';
-                } else if (msg.content.trim().toLowerCase() === 'out') {
-                    action = 'out';
-                }
-
-                if (action) {
-                    if (!attendanceMap[msg.dateStr]) {
-                        attendanceMap[msg.dateStr] = { in: [], out: [] };
-                    }
-                    attendanceMap[msg.dateStr][action].push(msg.timeStr);
-                }
-            });
-
-            renderUI(attendanceMap, targetMonth);
-        }
-
-        function renderUI(data, targetMonth) {
-            let dates = Object.keys(data).sort((a, b) => {
-                const partsA = a.split('/').map(Number);
-                const partsB = b.split('/').map(Number);
-                // Assume MM/DD/YY
-                const dateA = new Date(2000 + partsA[2], partsA[0] - 1, partsA[1]);
-                const dateB = new Date(2000 + partsB[2], partsB[0] - 1, partsB[1]);
-                return dateA - dateB;
-            });
-
-            if (targetMonth !== 'all') {
-                dates = dates.filter(d => {
-                    const month = parseInt(d.split('/')[0]) - 1;
-                    return month === parseInt(targetMonth);
-                });
+          if (entry !== "-" && exit !== "-") {
+            const m = calcMin(entry, exit);
+            if (m > 0) {
+              totalMin += m;
+              days++;
             }
+          }
+        });
 
-            if (dates.length === 0) {
-                dataSection.innerHTML = `
-                    <div class="empty-visual">
-                        <p>No activity records for the current filter set.</p>
-                    </div>
-                `;
-                statsStrip.style.display = 'none';
-                return;
+        statsStrip.style.display = "grid";
+        document.getElementById("statDays").textContent = days;
+        document.getElementById("statHours").textContent = `${Math.floor(
+          totalMin / 60
+        )}h ${totalMin % 60}m`;
+
+        const avg = days > 0 ? Math.floor(totalMin / days) : 0;
+        document.getElementById("statAvg").textContent = `${Math.floor(
+          avg / 60
+        )}h ${avg % 60}m`;
+
+        // New calculations
+        const totalDays = +document.getElementById("totalDays").value || 21;
+        const dailyHours = +document.getElementById("dailyHours").value || 9;
+        const requiredHours = totalDays * dailyHours;
+        const workedHours = totalMin / 60;
+        const remainingHours = Math.max(0, requiredHours - workedHours);
+        const overtimeHours = Math.max(0, workedHours - requiredHours);
+
+        document.getElementById(
+          "statRequired"
+        ).textContent = `${requiredHours}h`;
+        document.getElementById(
+          "statWorked"
+        ).textContent = `${workedHours.toFixed(1)}h`;
+        document.getElementById(
+          "statRemaining"
+        ).textContent = `${remainingHours.toFixed(1)}h`;
+        document.getElementById(
+          "statOvertime"
+        ).textContent = `${overtimeHours.toFixed(1)}h`;
+
+        statsStrip2.style.display = "grid";
+      }
+
+      function renderUI(data, targetMonth) {
+        let dates = Object.keys(data).sort((a, b) => {
+          const pa = a.split("/").map(Number);
+          const pb = b.split("/").map(Number);
+          return (
+            new Date(2000 + pa[2], pa[0] - 1, pa[1]) -
+            new Date(2000 + pb[2], pb[0] - 1, pb[1])
+          );
+        });
+
+        if (targetMonth !== "all") {
+          dates = dates.filter(
+            (d) =>
+              parseInt(d.split("/")[0], 10) - 1 === parseInt(targetMonth, 10)
+          );
+        }
+
+        if (dates.length === 0) {
+          dataSection.innerHTML = `
+                <div class="empty-visual">
+                    <p>No activity records for the current filter set.</p>
+                </div>
+            `;
+          statsStrip.style.display = "none";
+          statsStrip2.style.display = "none";
+          return;
+        }
+
+        let html =
+          "<table><thead><tr><th>Date</th><th>Entry</th><th>Exit</th><th>Duration</th></tr></thead><tbody>";
+
+        dates.forEach((date) => {
+          const day = data[date];
+          const entry = day.in[0] || "-";
+          const exit = day.out[day.out.length - 1] || "-";
+
+          // Parse date to get day name
+          const [month, dayNum, year] = date.split("/").map(Number);
+          const dateObj = new Date(2000 + year, month - 1, dayNum);
+          const dayName = dateObj.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          let durText = "-";
+          if (entry !== "-" && exit !== "-") {
+            const m = calcMin(entry, exit);
+            if (m > 0) {
+              durText = `${Math.floor(m / 60)}h ${m % 60}m`;
             }
+          }
 
-            let html = '<table><thead><tr><th>Date</th><th>Entry</th><th>Exit</th><th>Duration</th></tr></thead><tbody>';
-            
-            let totalMin = 0;
-            let days = 0;
+          html += `
+                <tr>
+                    <td>${dayName}, ${date}</td>
+                    <td><input class="editable-time tag-input" value="${entry}" data-date="${date}" data-type="in"></td>
+                    <td><input class="editable-time tag-input" value="${exit}" data-date="${date}" data-type="out"></td>
+                    <td><span class="duration tag tag-duration">${durText}</span></td>
+                </tr>
+            `;
+        });
 
-            dates.forEach(date => {
-                const day = data[date];
-                const entry = day.in[0] || '-';
-                const exit = day.out[day.out.length - 1] || '-';
-                
-                let durText = '-';
-                if (entry !== '-' && exit !== '-') {
-                    const m = calcMin(entry, exit);
-                    if (m > 0) {
-                        totalMin += m;
-                        days++;
-                        durText = `\${Math.floor(m / 60)}h \${m % 60}m\`;
-                    }
+        html += "</tbody></table>";
+        dataSection.innerHTML = html;
+
+        updateStats(attendanceMap, currentTargetMonth);
+
+        // Add event listeners for editable times
+        document.querySelectorAll(".editable-time").forEach((input) => {
+          input.addEventListener("input", (e) => {
+            const date = e.target.dataset.date;
+            const type = e.target.dataset.type;
+            const value = e.target.value.trim();
+            if (attendanceMap[date]) {
+              if (type === "in") {
+                attendanceMap[date].in[0] = value || "-";
+              } else {
+                attendanceMap[date].out[attendanceMap[date].out.length - 1] =
+                  value || "-";
+              }
+              // Recalculate duration
+              const entry = attendanceMap[date].in[0] || "-";
+              const exit =
+                attendanceMap[date].out[attendanceMap[date].out.length - 1] ||
+                "-";
+              let durText = "-";
+              if (entry !== "-" && exit !== "-") {
+                const m = calcMin(entry, exit);
+                if (m > 0) {
+                  durText = `${Math.floor(m / 60)}h ${m % 60}m`;
                 }
+              }
+              // Update the duration span
+              const row = e.target.closest("tr");
+              row.querySelector(".duration").textContent = durText;
+              // Update stats
+              updateStats(attendanceMap, currentTargetMonth);
+            }
+          });
+        });
+      }
 
-                html += \`
-                    <tr>
-                        <td>\${date}</td>
-                        <td><span class="tag tag-in">\${entry}</span></td>
-                        <td><span class="tag tag-out">\${exit}</span></td>
-                        <td><span class="tag tag-duration">\${durText}</span></td>
-                    </tr>
-                \`;
-            });
+      function calcMin(t1, t2) {
+        const parse = (t) => {
+          t = t.replace(/\s/g, " ").replace(/[\u202e\u200e\u202f\u200b]/g, "");
+          const m = t.match(/(\d+):(\d+)(?::(\d+))?\s*([AP]M)/i);
+          if (!m) return null;
 
-            html += '</tbody></table>';
-            dataSection.innerHTML = html;
+          let h = parseInt(m[1], 10);
+          const min = parseInt(m[2], 10);
+          const p = m[4].toUpperCase();
 
-            statsStrip.style.display = 'grid';
-            document.getElementById('statDays').textContent = days;
-            document.getElementById('statHours').textContent = `${Math.floor(totalMin / 60)} ${totalMin % 60}`;
-            
-            const avg = days > 0 ? Math.floor(totalMin / days) : 0;
-            document.getElementById('statAvg').textContent = `${Math.floor(avg / 60)}h \${avg % 60}m`;
-        }
+          if (p === "PM" && h < 12) h += 12;
+          if (p === "AM" && h === 12) h = 0;
 
-        function calcMin(t1, t2) {
-            const parse = (t) => {
-                // Handle WhatsApp's tricky whitespace and unicode
-                t = t.replace(/\\s/g, ' ').replace(/[\\u202e\\u200e\\u202f\\u200b]/g, '');
-                const m = t.match(/(\\d+):(\\d+)(?::(\\d+))?\\s*([AP]M)/i);
-                if (!m) return null;
-                let h = parseInt(m[1]);
-                const min = parseInt(m[2]);
-                const p = m[4].toUpperCase();
-                if (p === 'PM' && h < 12) h += 12;
-                if (p === 'AM' && h === 12) h = 0;
-                return h * 60 + min;
-            };
-            const m1 = parse(t1), m2 = parse(t2);
-            if (m1 === null || m2 === null) return 0;
-            return m2 >= m1 ? m2 - m1 : (1440 - m1) + m2; // Handle rollover
-        }
+          return h * 60 + min;
+        };
+
+        const m1 = parse(t1);
+        const m2 = parse(t2);
+        if (m1 === null || m2 === null) return 0;
+
+        return m2 >= m1 ? m2 - m1 : 1440 - m1 + m2;
+      }
     </script>
-</body>
+  </body>
 </html>
