@@ -567,12 +567,12 @@
       }
 
       function processAndRender() {
-        console.log("chatData",chatData)
+        console.log("chatData", chatData);
         if (chatData.length === 0) return;
 
         const targetName = nameFilterInput.value.trim().toLowerCase();
         const targetMonth = monthFilterSelect.value;
- console.log("targetName",targetName)
+        console.log("targetName", targetName);
         let events = [];
 
         const checkInKeywords = [
@@ -612,7 +612,12 @@
           }
 
           if (action) {
-            events.push({ date: msg.dateStr, time: msg.timeStr, action });
+            // Extract time from message if present (e.g., "Out at 8:30 PM")
+            let useTime = msg.timeStr;
+            const timeRegex = /(\d{1,2}:\d{2}(?::\d{2})?\s*[AP]M)/i;
+            const timeMatch = msg.content.match(timeRegex);
+            if (timeMatch) useTime = timeMatch[1];
+            events.push({ date: msg.dateStr, time: useTime, action });
           }
         });
 
