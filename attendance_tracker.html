@@ -197,15 +197,9 @@
 
       .stats-strip {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1.5rem;
         margin-bottom: 3rem;
-      }
-
-      @media (max-width: 600px) {
-        .stats-strip {
-          grid-template-columns: 1fr 1fr;
-        }
       }
 
       .stat-item {
@@ -455,10 +449,6 @@
             <span class="stat-val" id="statWorked">0h</span>
           </div>
           <div class="stat-item">
-            <span class="stat-lbl">Remaining Hours</span>
-            <span class="stat-val" id="statRemaining">0h</span>
-          </div>
-          <div class="stat-item">
             <span class="stat-lbl">Average Session</span>
             <span class="stat-val" id="statAvg">0h 0m</span>
           </div>
@@ -502,6 +492,7 @@
       const monthFilterSelect = document.getElementById("monthFilter");
       const dataSection = document.getElementById("dataSection");
       const statsStrip = document.getElementById("statsStrip");
+      const statsStrip2 = document.getElementById("statsStrip2");
       const fileNameDisplay = document.getElementById("fileName");
 
       // Set current month as default
@@ -576,15 +567,17 @@
       }
 
       function processAndRender() {
+        console.log("chatData",chatData)
         if (chatData.length === 0) return;
 
         const targetName = nameFilterInput.value.trim().toLowerCase();
         const targetMonth = monthFilterSelect.value;
-
+ console.log("targetName",targetName)
         let events = [];
 
         const checkInKeywords = [
           /\bcheck in\b/i,
+          /\bChecked in\b/i,
           /\bchecked in\b/i,
           /\bsigning in\b/i,
           /\bsign in\b/i,
@@ -596,13 +589,13 @@
           /\bcheck out\b/i,
           /\bchecked out\b/i,
           /\bsigning out\b/i,
+          /\bChecking out\b/i,
           /\bsign out\b/i,
           /\bcheckout\b/i,
           /🔴/,
         ];
 
         chatData.forEach((msg) => {
-          console.log(msg);
           if (msg.sender.toLowerCase() !== targetName) return;
 
           const content = msg.content.toLowerCase();
@@ -621,7 +614,6 @@
           if (action) {
             events.push({ date: msg.dateStr, time: msg.timeStr, action });
           }
-          console.log(events);
         });
 
         // Sort events by date and time
@@ -695,11 +687,7 @@
           }
         });
 
-        statsStrip.style.display = "grid";
-        document.getElementById("statDays").textContent = days;
-        document.getElementById("statHours").textContent = `${Math.floor(
-          totalMin / 60
-        )}h ${totalMin % 60}m`;
+        statsStrip2.style.display = "grid";
 
         const avg = days > 0 ? Math.floor(totalMin / days) : 0;
         document.getElementById("statAvg").textContent = `${Math.floor(
@@ -711,7 +699,7 @@
         const dailyHours = +document.getElementById("dailyHours").value || 9;
         const requiredHours = totalDays * dailyHours;
         const workedHours = totalMin / 60;
-        const remainingHours = Math.max(0, requiredHours - workedHours);
+        const remainingHours = Math.max(0, (totalDays - days) * dailyHours);
         const overtimeHours = Math.max(0, workedHours - requiredHours);
 
         document.getElementById(
@@ -720,9 +708,6 @@
         document.getElementById(
           "statWorked"
         ).textContent = `${workedHours.toFixed(1)}h`;
-        document.getElementById(
-          "statRemaining"
-        ).textContent = `${remainingHours.toFixed(1)}h`;
         document.getElementById(
           "statOvertime"
         ).textContent = `${overtimeHours.toFixed(1)}h`;
@@ -753,7 +738,7 @@
                     <p>No activity records for the current filter set.</p>
                 </div>
             `;
-          statsStrip.style.display = "none";
+          statsStrip2.style.display = "none";
           statsStrip2.style.display = "none";
           return;
         }
