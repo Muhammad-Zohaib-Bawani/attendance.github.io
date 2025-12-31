@@ -69,6 +69,7 @@
           var(--secondary),
           var(--accent)
         );
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0.5rem;
@@ -309,6 +310,10 @@
         opacity: 0.2;
       }
 
+      .empty-visual p {
+        margin-top: 1rem;
+      }
+
       footer {
         margin-top: auto;
         padding: 4rem 2rem;
@@ -381,6 +386,38 @@
         border-color: var(--primary);
         box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
       }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        border-radius: 1rem;
+        padding: 1rem 2rem;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top: 0.5rem;
+        width: 100%;
+        box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px -5px rgba(0, 210, 255, 0.4);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     </style>
   </head>
 
@@ -401,13 +438,14 @@
                 <span>Upload .txt</span> or Drop file
               </div>
             </div>
+            <button id="analyzeBtn" class="btn-primary">Analyze Log</button>
           </div>
           <div class="input-box">
             <label>Individual Name</label>
             <input
               type="text"
               id="nameFilter"
-              value="Zaib bawani"
+              value="syed osama"
               placeholder="Enter name..."
             />
           </div>
@@ -430,6 +468,12 @@
             </select>
           </div>
           <div class="input-box">
+            <label>Reporting Year</label>
+            <select id="yearFilter">
+              <option value="all">All Years</option>
+            </select>
+          </div>
+          <div class="input-box">
             <label>Total Working Days</label>
             <input type="number" id="totalDays" value="21" min="1" />
           </div>
@@ -439,7 +483,7 @@
           </div>
         </div>
 
-        <div id="statsStrip2" class="stats-strip">
+        <div id="statsStrip2" class="stats-strip" style="display: none">
           <div class="stat-item">
             <span class="stat-lbl">Required Hours</span>
             <span class="stat-val" id="statRequired">0h</span>
@@ -490,8 +534,9 @@
       const fileInput = document.getElementById("fileInput");
       const nameFilterInput = document.getElementById("nameFilter");
       const monthFilterSelect = document.getElementById("monthFilter");
+      const yearFilterSelect = document.getElementById("yearFilter");
+      const analyzeBtn = document.getElementById("analyzeBtn");
       const dataSection = document.getElementById("dataSection");
-      const statsStrip = document.getElementById("statsStrip");
       const statsStrip2 = document.getElementById("statsStrip2");
       const fileNameDisplay = document.getElementById("fileName");
 
@@ -501,12 +546,31 @@
       let chatData = [];
       let attendanceMap = {};
       let currentTargetMonth = "all";
+      let currentTargetYear = "all";
+      let dateFormat = "MDY"; // Default to Month/Day/Year
 
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         fileNameDisplay.innerHTML = `File: <span>${file.name}</span>`;
+      });
+
+      analyzeBtn.addEventListener("click", () => {
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("Please select a file first.");
+          return;
+        }
+
+        // Clear previous state
+        chatData = [];
+        attendanceMap = {};
+        dataSection.innerHTML = `
+        <div class="empty-visual">
+          <p>Analyzing log file...</p>
+        </div>
+      `;
+        statsStrip2.style.display = "none";
 
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -518,24 +582,30 @@
 
       nameFilterInput.addEventListener("input", processAndRender);
       monthFilterSelect.addEventListener("change", processAndRender);
+      yearFilterSelect.addEventListener("change", processAndRender);
 
       document
         .getElementById("totalDays")
         .addEventListener("input", () =>
-          updateStats(attendanceMap, currentTargetMonth)
+          updateStats(attendanceMap, currentTargetMonth, currentTargetYear)
         );
       document
         .getElementById("dailyHours")
         .addEventListener("input", () =>
-          updateStats(attendanceMap, currentTargetMonth)
+          updateStats(attendanceMap, currentTargetMonth, currentTargetYear)
         );
 
       function parseChat(text) {
         const lines = text.split("\n");
         const messages = [];
         let currentMsg = null;
+
+        // Robust regex for WhatsApp timestamps (supports both bracketed and unbracketed, various separators)
         const timestampRegex =
-          /^(\[?\d{1,2}\/\d{1,2}\/\d{2,4}, \d{1,2}:\d{2}(?::\d{2})?\s[AP]M\]?)( - )?/;
+          /^(\[?\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\s*[ap]m\]?)(?:\s+-\s+|\s+)/i;
+
+        let dmyCount = 0;
+        let mdyCount = 0;
 
         lines.forEach((line) => {
           const match = line.match(timestampRegex);
@@ -547,10 +617,19 @@
             const colonIndex = rest.indexOf(":");
 
             if (colonIndex !== -1) {
+              const parts = timestampStr.split(/,?\s+/);
+              const datePart = parts[0];
+              const timePart = parts.slice(1).join(" ");
+
+              // Detect date format
+              const dParts = datePart.split(/[/.-]/).map(Number);
+              if (dParts[0] > 12) dmyCount++;
+              if (dParts[1] > 12) mdyCount++;
+
               currentMsg = {
                 timestamp: timestampStr,
-                dateStr: timestampStr.split(", ")[0],
-                timeStr: timestampStr.split(", ")[1],
+                dateStr: datePart,
+                timeStr: timePart,
                 sender: rest.substring(0, colonIndex).trim(),
                 content: rest.substring(colonIndex + 1).trim(),
               };
@@ -562,19 +641,93 @@
           }
         });
 
+        dateFormat = dmyCount > mdyCount ? "DMY" : "MDY";
+        console.log(`Detected Date Format: ${dateFormat}`);
+
         if (currentMsg) messages.push(currentMsg);
         chatData = messages;
+        populateYearFilter(messages);
+      }
+
+      function populateYearFilter(messages) {
+        const years = new Set();
+        messages.forEach((msg) => {
+          const parts = msg.dateStr.split(/[/.-]/);
+          if (parts.length === 3) {
+            let year = parts[2];
+            if (year.length === 2) year = "20" + year;
+            years.add(year);
+          }
+        });
+
+        const sortedYears = Array.from(years).sort((a, b) => b - a);
+        const currentYear = new Date().getFullYear().toString();
+
+        let html = '<option value="all">All Years</option>';
+        sortedYears.forEach((y) => {
+          html += `<option value="${y}">${y}</option>`;
+        });
+        yearFilterSelect.innerHTML = html;
+
+        if (sortedYears.includes(currentYear)) {
+          yearFilterSelect.value = currentYear;
+        } else if (sortedYears.length > 0) {
+          yearFilterSelect.value = sortedYears[0];
+        }
       }
 
       function processAndRender() {
-        console.log("chatData", chatData);
         if (chatData.length === 0) return;
 
         const targetName = nameFilterInput.value.trim().toLowerCase();
         const targetMonth = monthFilterSelect.value;
-        console.log("targetName", targetName);
-        let events = [];
+        const targetYear = yearFilterSelect.value;
 
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+        const monthLabel =
+          targetMonth === "all"
+            ? "Full Year Analysis"
+            : monthNames[parseInt(targetMonth)];
+
+        console.log(
+          `--- Filtering for Period: ${monthLabel} ${
+            targetYear === "all" ? "(All Years)" : targetYear
+          } ---`
+        );
+
+        // 1. Filter by Year first
+        let filteredByPeriod = chatData;
+        if (targetYear !== "all") {
+          filteredByPeriod = filteredByPeriod.filter((msg) => {
+            const parts = msg.dateStr.split(/[/.-]/);
+            let y = parts[2];
+            if (y.length === 2) y = "20" + y;
+            return y === targetYear;
+          });
+        }
+
+        // 2. Filter by Month second
+        if (targetMonth !== "all") {
+          filteredByPeriod = filteredByPeriod.filter((msg) => {
+            const parts = msg.dateStr.split(/[/.-]/).map(Number);
+            const m = dateFormat === "DMY" ? parts[1] - 1 : parts[0] - 1;
+            return m.toString() === targetMonth;
+          });
+        }
+        let events = [];
         const checkInKeywords = [
           /\bcheck in\b/i,
           /\bChecked in\b/i,
@@ -584,7 +737,6 @@
           /✅ in/i,
           /🟢/,
         ];
-
         const checkOutKeywords = [
           /\bcheck out\b/i,
           /\bchecked out\b/i,
@@ -595,7 +747,7 @@
           /🔴/,
         ];
 
-        chatData.forEach((msg) => {
+        filteredByPeriod.forEach((msg) => {
           if (msg.sender.toLowerCase() !== targetName) return;
 
           const content = msg.content.toLowerCase();
@@ -612,9 +764,8 @@
           }
 
           if (action) {
-            // Extract time from message if present (e.g., "Out at 8:30 PM")
             let useTime = msg.timeStr;
-            const timeRegex = /(\d{1,2}:\d{2}(?::\d{2})?\s*[AP]M)/i;
+            const timeRegex = /(\d{1,2}:\d{2}(?::\d{2})?\s*[ap]m)/i;
             const timeMatch = msg.content.match(timeRegex);
             if (timeMatch) useTime = timeMatch[1];
             events.push({ date: msg.dateStr, time: useTime, action });
@@ -623,14 +774,23 @@
 
         // Sort events by date and time
         const parseDateTime = (d, t) => {
-          const [m, dd, y] = d.split("/").map(Number);
-          const timeParts = t.split(/[:\s]/);
-          let h = +timeParts[0];
-          let min = +timeParts[1];
+          if (!d || !t) return new Date(0);
+          const parts = d.split(/[/.-]/).map(String);
+          let month, dayNum, yearStr;
+          if (dateFormat === "DMY") {
+            [dayNum, month, yearStr] = parts;
+          } else {
+            [month, dayNum, yearStr] = parts;
+          }
+          const year =
+            yearStr.length === 2 ? 2000 + parseInt(yearStr) : parseInt(yearStr);
+          const timeParts = t.split(/[:\s\u202F\u00A0]/);
+          let h = parseInt(timeParts[0]) || 0;
+          let min = parseInt(timeParts[1]) || 0;
           const ampm = t.toUpperCase().includes("PM") ? "PM" : "AM";
           if (ampm === "PM" && h < 12) h += 12;
           if (ampm === "AM" && h === 12) h = 0;
-          return new Date(2000 + y, m - 1, dd, h, min);
+          return new Date(year, parseInt(month) - 1, parseInt(dayNum), h, min);
         };
 
         events.sort(
@@ -641,6 +801,7 @@
         // Pair in and out
         attendanceMap = {};
         let currentIn = null;
+        let currentOut =  null;
         events.forEach((event) => {
           if (event.action === "in") {
             currentIn = event;
@@ -652,37 +813,56 @@
             currentIn = null;
           }
         });
-
+        console.log("events", events);
+        console.log("attendanceMap",attendanceMap)
         currentTargetMonth = targetMonth;
-
-        renderUI(attendanceMap, targetMonth);
+        currentTargetYear = targetYear;
+        renderUI(attendanceMap, targetMonth, targetYear);
       }
 
-      function updateStats(data, targetMonth) {
+      function updateStats(data, targetMonth, targetYear) {
         let dates = Object.keys(data).sort((a, b) => {
-          const pa = a.split("/").map(Number);
-          const pb = b.split("/").map(Number);
-          return (
-            new Date(2000 + pa[2], pa[0] - 1, pa[1]) -
-            new Date(2000 + pb[2], pb[0] - 1, pb[1])
-          );
+          const pa = a.split(/[/.-]/);
+          const pb = b.split(/[/.-]/);
+          const ya =
+            pa[2].length === 2 ? 2000 + parseInt(pa[2]) : parseInt(pa[2]);
+          const yb =
+            pb[2].length === 2 ? 2000 + parseInt(pb[2]) : parseInt(pb[2]);
+          if (ya !== yb) return ya - yb;
+          let ma, da, mb, db;
+          if (dateFormat === "DMY") {
+            [da, ma] = pa.map(Number);
+            [db, mb] = pb.map(Number);
+          } else {
+            [ma, da] = pa.map(Number);
+            [mb, db] = pb.map(Number);
+          }
+          if (ma !== mb) return ma - mb;
+          return da - db;
         });
 
+        if (targetYear !== "all") {
+          dates = dates.filter((d) => {
+            const yearStr = d.split(/[/.-]/)[2];
+            const year = yearStr.length === 2 ? "20" + yearStr : yearStr;
+            return year === targetYear;
+          });
+        }
+
         if (targetMonth !== "all") {
-          dates = dates.filter(
-            (d) =>
-              parseInt(d.split("/")[0], 10) - 1 === parseInt(targetMonth, 10)
-          );
+          dates = dates.filter((d) => {
+            const parts = d.split(/[/.-]/).map(Number);
+            const m = dateFormat === "DMY" ? parts[1] - 1 : parts[0] - 1;
+            return m.toString() === targetMonth;
+          });
         }
 
         let totalMin = 0;
         let days = 0;
-
         dates.forEach((date) => {
           const day = data[date];
           const entry = day.in[0] || "-";
           const exit = day.out[day.out.length - 1] || "-";
-
           if (entry !== "-" && exit !== "-") {
             const m = calcMin(entry, exit);
             if (m > 0) {
@@ -692,73 +872,96 @@
           }
         });
 
-        statsStrip2.style.display = "grid";
-
         const avg = days > 0 ? Math.floor(totalMin / days) : 0;
         document.getElementById("statAvg").textContent = `${Math.floor(
           avg / 60
         )}h ${avg % 60}m`;
 
-        // New calculations
         const totalDays = +document.getElementById("totalDays").value || 21;
         const dailyHours = +document.getElementById("dailyHours").value || 9;
         const requiredHours = totalDays * dailyHours;
-        const workedHours = totalMin / 60;
-        const remainingHours = Math.max(0, (totalDays - days) * dailyHours);
-        const overtimeHours = Math.max(0, workedHours - requiredHours);
+        const workedH = Math.floor(totalMin / 60);
+        const workedM = totalMin % 60;
+        const overtimeMin = Math.max(0, totalMin - requiredHours * 60);
+        const overtimeH = Math.floor(overtimeMin / 60);
+        const overtimeM = overtimeMin % 60;
 
         document.getElementById(
           "statRequired"
         ).textContent = `${requiredHours}h`;
         document.getElementById(
           "statWorked"
-        ).textContent = `${workedHours.toFixed(1)}h`;
+        ).textContent = `${workedH}h ${workedM}m`;
         document.getElementById(
           "statOvertime"
-        ).textContent = `${overtimeHours.toFixed(1)}h`;
-
+        ).textContent = `${overtimeH}h ${overtimeM}m`;
         statsStrip2.style.display = "grid";
       }
 
-      function renderUI(data, targetMonth) {
+      function renderUI(data, targetMonth, targetYear) {
         let dates = Object.keys(data).sort((a, b) => {
-          const pa = a.split("/").map(Number);
-          const pb = b.split("/").map(Number);
-          return (
-            new Date(2000 + pa[2], pa[0] - 1, pa[1]) -
-            new Date(2000 + pb[2], pb[0] - 1, pb[1])
-          );
+          const pa = a.split(/[/.-]/);
+          const pb = b.split(/[/.-]/);
+          const ya =
+            pa[2].length === 2 ? 2000 + parseInt(pa[2]) : parseInt(pa[2]);
+          const yb =
+            pb[2].length === 2 ? 2000 + parseInt(pb[2]) : parseInt(pb[2]);
+          if (ya !== yb) return ya - yb;
+          let ma, da, mb, db;
+          if (dateFormat === "DMY") {
+            [da, ma] = pa.map(Number);
+            [db, mb] = pb.map(Number);
+          } else {
+            [ma, da] = pa.map(Number);
+            [mb, db] = pb.map(Number);
+          }
+          if (ma !== mb) return ma - mb;
+          return da - db;
         });
 
+        if (targetYear !== "all") {
+          dates = dates.filter((d) => {
+            const yearStr = d.split(/[/.-]/)[2];
+            const year = yearStr.length === 2 ? "20" + yearStr : yearStr;
+            return year === targetYear;
+          });
+        }
+
         if (targetMonth !== "all") {
-          dates = dates.filter(
-            (d) =>
-              parseInt(d.split("/")[0], 10) - 1 === parseInt(targetMonth, 10)
-          );
+          dates = dates.filter((d) => {
+            const parts = d.split(/[/.-]/).map(Number);
+            const m = dateFormat === "DMY" ? parts[1] - 1 : parts[0] - 1;
+            return m.toString() === targetMonth;
+          });
         }
 
         if (dates.length === 0) {
           dataSection.innerHTML = `
-                <div class="empty-visual">
-                    <p>No activity records for the current filter set.</p>
-                </div>
-            `;
-          statsStrip2.style.display = "none";
+          <div class="empty-visual">
+            <p>No activity records for the current filter set.</p>
+          </div>
+        `;
           statsStrip2.style.display = "none";
           return;
         }
 
         let html =
           "<table><thead><tr><th>Date</th><th>Entry</th><th>Exit</th><th>Duration</th></tr></thead><tbody>";
-
         dates.forEach((date) => {
           const day = data[date];
           const entry = day.in[0] || "-";
           const exit = day.out[day.out.length - 1] || "-";
 
-          // Parse date to get day name
-          const [month, dayNum, year] = date.split("/").map(Number);
-          const dateObj = new Date(2000 + year, month - 1, dayNum);
+          const parts = date.split(/[/.-]/).map(String);
+          let month, dayNum, yearStr;
+          if (dateFormat === "DMY") {
+            [dayNum, month, yearStr] = parts;
+          } else {
+            [month, dayNum, yearStr] = parts;
+          }
+          const year =
+            yearStr.length === 2 ? 2000 + parseInt(yearStr) : parseInt(yearStr);
+          const dateObj = new Date(year, parseInt(month) - 1, parseInt(dayNum));
           const dayName = dateObj.toLocaleDateString("en-US", {
             weekday: "long",
           });
@@ -766,81 +969,82 @@
           let durText = "-";
           if (entry !== "-" && exit !== "-") {
             const m = calcMin(entry, exit);
-            if (m > 0) {
-              durText = `${Math.floor(m / 60)}h ${m % 60}m`;
-            }
+            if (m > 0) durText = `${Math.floor(m / 60)}h ${m % 60}m`;
           }
 
           html += `
-                <tr>
-                    <td>${dayName}, ${date}</td>
-                    <td><input class="editable-time tag-input" value="${entry}" data-date="${date}" data-type="in"></td>
-                    <td><input class="editable-time tag-input" value="${exit}" data-date="${date}" data-type="out"></td>
-                    <td><span class="duration tag tag-duration">${durText}</span></td>
-                </tr>
-            `;
+          <tr>
+            <td>${dayName}, ${date}</td>
+            <td><input class="editable-time tag-input" value="${entry.replace(
+              /\s*[ap]m/i,
+              ""
+            )}" data-date="${date}" data-type="in"></td>
+            <td><input class="editable-time tag-input" value="${exit.replace(
+              /\s*[ap]m/i,
+              ""
+            )}" data-date="${date}" data-type="out"></td>
+            <td><span class="duration tag tag-duration">${durText}</span></td>
+          </tr>
+        `;
         });
-
         html += "</tbody></table>";
         dataSection.innerHTML = html;
 
-        updateStats(attendanceMap, currentTargetMonth);
+        updateStats(attendanceMap, currentTargetMonth, currentTargetYear);
 
-        // Add event listeners for editable times
         document.querySelectorAll(".editable-time").forEach((input) => {
           input.addEventListener("input", (e) => {
             const date = e.target.dataset.date;
             const type = e.target.dataset.type;
             const value = e.target.value.trim();
-            if (attendanceMap[date]) {
-              if (type === "in") {
-                attendanceMap[date].in[0] = value || "-";
-              } else {
-                attendanceMap[date].out[attendanceMap[date].out.length - 1] =
-                  value || "-";
-              }
-              // Recalculate duration
-              const entry = attendanceMap[date].in[0] || "-";
-              const exit =
-                attendanceMap[date].out[attendanceMap[date].out.length - 1] ||
-                "-";
-              let durText = "-";
-              if (entry !== "-" && exit !== "-") {
-                const m = calcMin(entry, exit);
-                if (m > 0) {
-                  durText = `${Math.floor(m / 60)}h ${m % 60}m`;
-                }
-              }
-              // Update the duration span
-              const row = e.target.closest("tr");
-              row.querySelector(".duration").textContent = durText;
-              // Update stats
-              updateStats(attendanceMap, currentTargetMonth);
+            const row = e.target.closest("tr");
+            if (!attendanceMap[date]) return;
+            const idx = type === "in" ? 0 : attendanceMap[date].out.length - 1;
+            const originalValue = attendanceMap[date][type][idx] || "-";
+            const ampmMatch = originalValue.match(/\s*[ap]m/i);
+            const ampm = ampmMatch ? ampmMatch[0] : "";
+
+            if (type === "in") {
+              attendanceMap[date].in[0] =
+                value && value !== "-" ? value + ampm : "-";
+            } else {
+              attendanceMap[date].out[attendanceMap[date].out.length - 1] =
+                value && value !== "-" ? value + ampm : "-";
             }
+
+            const entry = attendanceMap[date].in[0] || "-";
+            const exit =
+              attendanceMap[date].out[attendanceMap[date].out.length - 1] ||
+              "-";
+            let durText = "-";
+            if (entry !== "-" && exit !== "-") {
+              const m = calcMin(entry, exit);
+              if (m > 0) durText = `${Math.floor(m / 60)}h ${m % 60}m`;
+            }
+            row.querySelector(".duration").textContent = durText;
+            updateStats(attendanceMap, currentTargetMonth, currentTargetYear);
           });
         });
       }
 
       function calcMin(t1, t2) {
         const parse = (t) => {
-          t = t.replace(/\s/g, " ").replace(/[\u202e\u200e\u202f\u200b]/g, "");
-          const m = t.match(/(\d+):(\d+)(?::(\d+))?\s*([AP]M)/i);
+          if (!t || t === "-") return null;
+          const cleaned = t
+            .replace(/[\u202e\u200e\u202f\u200b\u00a0]/g, " ")
+            .trim();
+          const m = cleaned.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap]m)/i);
           if (!m) return null;
-
           let h = parseInt(m[1], 10);
           const min = parseInt(m[2], 10);
           const p = m[4].toUpperCase();
-
           if (p === "PM" && h < 12) h += 12;
           if (p === "AM" && h === 12) h = 0;
-
           return h * 60 + min;
         };
-
         const m1 = parse(t1);
         const m2 = parse(t2);
         if (m1 === null || m2 === null) return 0;
-
         return m2 >= m1 ? m2 - m1 : 1440 - m1 + m2;
       }
     </script>
